@@ -5,7 +5,7 @@ import java.awt.event.KeyListener;
 
 
 public class Main {
-    public static void main(String[] args) {
+    public static void main(String[] args) throws InterruptedException {
 
         Hello s = new Hello();
         JFrame f = new JFrame();

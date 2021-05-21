@@ -3,17 +3,18 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
-import java.awt.geom.Ellipse2D;
 import javax.swing.*;
 
 public class Hello extends JPanel implements ActionListener, KeyListener
 {
-    int BOARD_WIDTH = 800, BOARD_HEIGHT = 1000;
-    Timer tm = new Timer(5, this); //timer
-    Player player;
-    Invader[] ayy = new Invader[10];
-    int ayyx = 10;
-    int ayyy = 10;
+    private final int BOARD_WIDTH = 800, BOARD_HEIGHT = 1000;
+    Timer tm = new Timer(5, this); //timer refreshes screen 5mS
+    private final Player player;
+    Invader[] ayy = new Invader[15];
+    private int ayyx = 10;
+    private int ayyy = 10;
+    private int count = 0;
+    Projectile[] Shot = new Projectile[40]; // make number higher for more shots in game.
 
     public Hello(){
         tm.start();
@@ -21,51 +22,91 @@ public class Hello extends JPanel implements ActionListener, KeyListener
         setFocusable(true);
         setFocusTraversalKeysEnabled(false);
         player = new Player(BOARD_WIDTH/2, BOARD_HEIGHT - 60, 5);
+
+        //creating Bullets
+        for(int k = 0; k < Shot.length; k++){
+            Shot[k] = new Projectile(player.x, player.y - 20, 10,10, Color.red);
+        }
+
         //creating ayys
         for(int i = 0; i < ayy.length; i++){
             ayy[i] = new Invader(ayyx, ayyy, 10);
             ayyx += 40;
-            if(i == 4 ){
+            if(i == 4 || i == 9 || i == 14){
                 ayyx = 10;
                 ayyy +=40;
             }
         }
     }
 
-    public void moveAyy(){
-        for(int i = 0; i < ayy.length; i++) {
-            if (ayy[i].moveLeft == true) {
-                ayy[i].x -= 2;//ayy[i].speed;
-            }
-            if (ayy[i].moveRight == true) {
-                ayy[i].x += 2;//ayy[i].speed;
+    public void moveBullet(){
+        for(int i = 0; i < Shot.length; i++) {
+            if (Shot[i].isVisible) {
+                Shot[i].y -= 4;
             }
         }
-            for(int k = 0; k < ayy.length; k++){
-            if (ayy[k].x > BOARD_WIDTH){
-                for(int j =0; j<ayy.length; j++){
-                    ayy[k].moveLeft = true;
-                    ayy[k].moveRight = false;
+                //TOP OF SCREEN DETECTION
+            for(int i = 0; i < Shot.length; i++){
+                if (Shot[i].y < (20)){
+                    Shot[i].isVisible = false;
+                    Shot[i].moveUp = false;
+                    Shot[i].y = player.y - 20;
+                    Shot[i].x = player.x;
+                    if( i >= 15){
+                        count = 0;
+                    }
                 }
             }
-            if (ayy[k].x < 0){
-                for(int j =0; j<ayy.length; j++){
-                    ayy[k].moveRight = true;
-                    ayy[k].moveLeft = false;
+        for(int i = 0; i < ayy.length; i++){ // Bullet and Ayy collision
+            for(int j = 0; j < Shot.length; j++) {
+                if(Shot[j].y <= (ayy[i].y + 10) && Shot[j].y >= (ayy[i].y - 10) && ayy[i].isVisible && (Shot[j].x >= ayy[i].x - 10) && Shot[j].x <= (ayy[i].x + 10)) { // shot has to be in y range of invader
+                    Shot[j].isVisible = false;
+                    Shot[j].moveUp = false;
+                    Shot[j].y = player.y - 20;
+                    Shot[j].x = player.x;
+                    ayy[i].isVisible = false;
+                    ayy[i].moveLeft = false;
+                    ayy[i].moveRight = false;
                 }
             }
         }
     }
 
-    @Override //draws everything.
-    public void paint(Graphics g){
+
+    public void moveAyy(){
+        for(int i = 0; i < ayy.length; i++) {
+            if (ayy[i].moveLeft && ayy[i].isVisible) {
+                ayy[i].x -= 2;
+            }
+            if (ayy[i].moveRight && ayy[i].isVisible) {
+                ayy[i].x += 2;
+            }
+        }
+            for(int k = 0; k < ayy.length; k++){
+            if (ayy[k].x > (BOARD_WIDTH - 40) && ayy[k].isVisible){
+                for(int j =0; j<ayy.length; j++){
+                    ayy[j].moveLeft = true;
+                    ayy[j].moveRight = false;
+                    ayy[j].y += 10;
+                }
+            }
+            if (ayy[k].x < 0 && ayy[k].isVisible){
+                for(int j =0; j<ayy.length; j++){
+                    if(ayy[j].isVisible) {
+                        ayy[j].moveRight = true;
+                        ayy[j].moveLeft = false;
+                        ayy[j].y += 10;
+                    }
+                }
+            }
+        }
+    }
+
+    @Override
+    public void paint(Graphics g){ //draws everything.
         super.paint(g);
        super.paintComponent(g);
-    /*
-        Ellipse2D circle = new Ellipse2D.Double(Posx, 300,40, 40);
-        g2.fill(circle);
-        */
-        //playerf
+        //player
         g.setColor(Color.red);
         g.fillRect(player.x,player.y,20, 20);
         if(player.moveRight){
@@ -75,16 +116,20 @@ public class Hello extends JPanel implements ActionListener, KeyListener
             player.x -= player.speed;
         }
         moveAyy();
-        for(int i = 0; i < ayy.length; i++){
-            g.fillRect(ayy[i].x,ayy[i].y,30, 30);
+        moveBullet();
+        for(int i = 0; i < ayy.length; i++) {
+            if (!ayy[i].isVisible) {
+                g.clearRect(ayy[i].x, ayy[i].y, 30, 30);
+            } else {
+                g.fillRect(ayy[i].x, ayy[i].y, 30, 30);
+            }
         }
-      /*  if(fire == 1) {
-            Projectile yes = new Projectile(Posx + 17,(Posy - 35),10,10, Color.blue, Vely); //creates projectile instance
-            g2.setColor(yes.color);
-            g2.fill(yes);
-            //g2.drawString(); use to draw text
 
-       */
+        for(int i = 0; i < Shot.length; i++) {
+            if (Shot[i].isVisible) {
+                g.fillRect(Shot[i].x, Shot[i].y, 10, 10);
+            }
+        }
     }
 
 
@@ -103,7 +148,15 @@ public class Hello extends JPanel implements ActionListener, KeyListener
             player.moveRight = true;
         }
 
-    }
+        if(code == 38){
+               Shot[count].isVisible = true;
+               Shot[count].moveUp = true;
+               Shot[count].x = player.x;
+               Shot[count].y = player.y - 20;
+               count = count + 1;
+           }
+        }
+
 
     @Override
     public void keyTyped(KeyEvent e) {
@@ -114,6 +167,7 @@ public class Hello extends JPanel implements ActionListener, KeyListener
         if(code == 39){
             player.moveRight = true;
         }
+
     }
 
     @Override
@@ -123,29 +177,6 @@ public class Hello extends JPanel implements ActionListener, KeyListener
         player.moveRight = false;
         player.moveLeft = false;
         }
+
     }
-
-    public void run() {
-
-        long beforeTime, timeDiff, sleep;
-
-        beforeTime = System.currentTimeMillis();
-        int animationDelay = 5;
-        long time =
-                System.currentTimeMillis();
-        while (true) {//infinite loop
-            // spriteManager.update();
-            repaint();
-            try {
-                time += animationDelay;
-                Thread.sleep(Math.max(0,time -
-                        System.currentTimeMillis()));
-            }catch (InterruptedException e) {
-                System.out.println(e);
-            }//end catch
-        }//end while loop
-
-
-    }//end of run
-
 }

@@ -4,6 +4,7 @@ import java.awt.event.KeyListener;
 
 public class Projectile extends Rectangle {
 
+    boolean moveUp,isVisible;
 
     Color color;
 
@@ -13,6 +14,10 @@ public class Projectile extends Rectangle {
             this.width = width;
             this.height = height;
             this.color = color;
+
+          moveUp = false;
+          isVisible = false;
+
         }
 
 
